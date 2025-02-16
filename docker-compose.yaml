@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  avito-shop-service:
+    build: .
+    container_name: app
+    ports:
+      - "8080:8080"
+    environment:
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_DIALECT: ${DB_DIALECT}
+      DB_MAX_OPEN_CONN: ${DB_MAX_OPEN_CONN}
+      DB_MAX_IDLE_CONN: ${DB_MAX_IDLE_CONN}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+    env_file:
+      - .env
+
+  db:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - /var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U postgres -d shop'" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+    env_file:
+      - .env
+networks:
+  internal:
